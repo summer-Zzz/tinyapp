@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/summer-Zzz/tinyapp/issues"
   },
-  "homepage": "https://github.com/summer-Zzz/tinyapp#readme"
+  "homepage": "https://github.com/summer-Zzz/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
