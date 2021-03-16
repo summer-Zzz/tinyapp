@@ -17,18 +17,22 @@ const urlDatabase = {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 }
 
+// const updateURL = (shortURL, UpdateLongURL) => {
+//   urlDatabase[shortURL] = UpdateLongURL;
+// }
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.send("Hello!"); //display hello in the home page
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
+// app.get("/urls.json", (req, res) => {
+//   res.json(urlDatabase);
+// });
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
+  // to loop through the database
 });
 
 app.post("/urls", (req, res) => {
@@ -46,9 +50,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect('/urls');
 })
 
-
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
+  //create new url
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -61,7 +65,29 @@ app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; 
   const longURL = urlDatabase[shortURL];
   res.redirect(longURL);
+  //redirect to the longURL page by using a shortURL
 });
+
+// app.get("/urls/:shortURL", (req, res) => {
+//   const templateVars = 
+//   {shortURL: req.params.shortURL,
+//     longURL: req.query.longURL}
+//   res.render('urls_show', templateVars);
+// })
+
+
+app.post("/urls/:id", (req, res) => {
+  const shortURL = req.params.id;
+  const longURL = req.body.longURL;
+  // const longURL = urlDatabase[shortURL];
+  // updateURL(shortURL, longURL);
+  urlDatabase[shortURL] = longURL;
+  res.redirect('/urls');
+  return;
+  //update a url
+})
+
+
 
 
 // app.get("/u/new", (req, res) => {
