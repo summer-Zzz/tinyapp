@@ -13,11 +13,40 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "82dfba": {
+    id: "82dfba", 
+    email: "mary0283@gmail.com", 
+    password: "ilikeapples"
+  },
+  "ca645c": {
+    id: "ca645c", 
+    email: "sleepysmith@gmail.com", 
+    password: "0283930ddaa"
+  }
+}
 
  function generateRandomString() {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 }
 
+const findUserByEmail = (email) => {
+  for (userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return false;
+}
+
+const authenticateUser = (email, password) => {
+  const foundUser = findUserByEmail(email);
+  if(foundUser && userFound.password === password){
+    return userFound;
+  } else {
+    return false;
+  }
+}
 
 app.get("/", (req, res) => {
   res.send("Hello!"); //display hello in the home page
@@ -30,18 +59,16 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = 
   { urls: urlDatabase,
-    username: req.cookies["username"] };
+    user: req.cookies["user"]
+  };
   res.render("urls_index", templateVars);
   // to loop through the database
 });
 
 app.post("/urls", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"]
-  };
   const newShortUrl = generateRandomString();
   urlDatabase[newShortUrl] = req.body.longURL;
-  res.redirect(`/urls/${newShortUrl}`, templateVars);
+  res.redirect(`/urls/${newShortUrl}`);
 })
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -53,8 +80,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 })
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    username: req.cookies["username"]
+  const templateVars = 
+  {
+    user: req.cookies["user"]
   };
   res.render("urls_new", templateVars);
   //create new url
@@ -65,7 +93,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = 
   { shortURL: shortURL, 
     longURL: urlDatabase[shortURL],
-    username: req.cookies["username"] };
+    user: req.cookies["user"] };
   res.render("urls_show", templateVars);
 });
 
@@ -84,8 +112,8 @@ app.get("/u/:shortURL", (req, res) => {
 // })
 
 
-app.post("/urls/:id", (req, res) => {
-  const shortURL = req.params.id;
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
   // const longURL = urlDatabase[shortURL];
   // updateURL(shortURL, longURL);
@@ -95,27 +123,48 @@ app.post("/urls/:id", (req, res) => {
   //update a url
 })
 
-app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect("/urls");
-})
+// app.post("/login", (req, res) => {
+//   res.cookie('username', req.body.username);
+//   res.redirect("/urls");
+// })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user');
   res.redirect("/urls");
 })
 
+app.get("/register", (req, res) => {
+  //render the regitser template
+  const templateVars = {
+    user: req.cookies["user"]
+  };
+  res.render("urls_register", templateVars)
+})
 
-
-// app.get("/u/new", (req, res) => {
-//   res.render("urls_new");
-// });
-
-// app.get("/u/:shortURL", (req, res) => {
-//   const shortURL = req.params.shortURL; 
-//   const longURL = urlDatabase[shortURL];
-//   res.redirect(longURL);
-// });
+app.post("/register", (req, res) => {
+  //the endpoint that handles the registration form data
+  const newUserId = generateRandomString();
+  const newEmail = req.body.email;
+  const newPassword = req.body.password;
+  console.log(users)
+  const userFound = findUserByEmail(newEmail);
+  if (newEmail && newPassword) { //check if they put email and password
+    if (!userFound ) { // check if user exist
+      users[newUserId] = 
+      {
+        id: newUserId,
+        email: newEmail,
+        password: newPassword
+      }
+      res.cookie('user', users[newUserId]);
+      res.redirect('/urls');
+    } else {
+      res.status(400).send('The user already exists!');
+    }
+  } else {
+    res.status(400).send('Put Something Here!');
+  }
+})
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
