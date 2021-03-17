@@ -2,10 +2,11 @@ const express = require("express");
 const app = express();
 const PORT = 8080; 
 
-app.set("view engine", "ejs") 
-
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+app.set("view engine", "ejs") 
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -17,9 +18,6 @@ const urlDatabase = {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 }
 
-// const updateURL = (shortURL, UpdateLongURL) => {
-//   urlDatabase[shortURL] = UpdateLongURL;
-// }
 
 app.get("/", (req, res) => {
   res.send("Hello!"); //display hello in the home page
@@ -30,16 +28,20 @@ app.get("/", (req, res) => {
 // });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = 
+  { urls: urlDatabase,
+    username: req.cookies["username"] };
   res.render("urls_index", templateVars);
   // to loop through the database
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
+  const templateVars = {
+    username: req.cookies["username"]
+  };
   const newShortUrl = generateRandomString();
   urlDatabase[newShortUrl] = req.body.longURL;
-  res.redirect(`/urls/${newShortUrl}`);
+  res.redirect(`/urls/${newShortUrl}`, templateVars);
 })
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -51,13 +53,19 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 })
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_new", templateVars);
   //create new url
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; 
-  const templateVars = { shortURL: shortURL, longURL: urlDatabase[shortURL] };
+  const templateVars = 
+  { shortURL: shortURL, 
+    longURL: urlDatabase[shortURL],
+    username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
 
@@ -87,6 +95,15 @@ app.post("/urls/:id", (req, res) => {
   //update a url
 })
 
+app.post("/login", (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect("/urls");
+})
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
+  res.redirect("/urls");
+})
 
 
 
