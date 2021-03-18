@@ -198,8 +198,8 @@ app.get("/register", (req, res) => {
   res.render("urls_register", templateVars);
 });
 
+//the endpoint that handles the registration form data
 app.post("/register", (req, res) => {
-  //the endpoint that handles the registration form data
   const newUserId = generateRandomString();
   const newEmail = req.body.newemail;
   const newPassword = req.body.newpassword;
