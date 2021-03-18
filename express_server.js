@@ -51,7 +51,7 @@ const authenticateUser = (email, password) => {
 
 //display hello in the home page
 app.get("/", (req, res) => {
-  res.send("Hello!"); 
+  res.send("Hello!");
 });
 
 // app.get("/urls.json", (req, res) => {
@@ -71,17 +71,17 @@ app.get("/urls", (req, res) => {
 //create new shorturl and redirect to /urls/:shortURL
 app.post("/urls", (req, res) => {
   const user = req.cookies["user_id"];
-  if (user){
-  const newShortUrl = generateRandomString();
-  urlDatabase[newShortUrl] = {
-   longURL: req.body.longURL,
-   urlUser: user.id,
-  }
-  // const templateVars =
-  // { 
-  //   user: req.cookies["user_id"]
-  // };
-  res.redirect(`/urls/${newShortUrl}`);
+  if (user) {
+    const newShortUrl = generateRandomString();
+    urlDatabase[newShortUrl] = {
+      longURL: req.body.longURL,
+      urlUser: user.id,
+    };
+    // const templateVars =
+    // {
+    //   user: req.cookies["user_id"]
+    // };
+    res.redirect(`/urls/${newShortUrl}`);
   } else {
     res.redirect("/login");
   }
@@ -90,11 +90,11 @@ app.post("/urls", (req, res) => {
 //delete the shortened url
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = req.cookies["user_id"];
-  if (user){
-  const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  //redirect
-  res.redirect('/urls');
+  if (user) {
+    const shortURL = req.params.shortURL;
+    delete urlDatabase[shortURL];
+    //redirect
+    res.redirect('/urls');
   } else {
     res.send("You Only Edit or Delete Your Own URLs!");
   }
@@ -104,11 +104,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: req.cookies["user_id"]
-  }
+  };
   if (templateVars.user) {
     res.render("urls_new", templateVars);
   } else {
-    res.redirect("/login")
+    res.redirect("/login");
   }
 });
 
@@ -143,12 +143,12 @@ app.get("/u/:shortURL", (req, res) => {
 //update a url
 app.post("/urls/:shortURL", (req, res) => {
   const user = req.cookies["user_id"];
-  if (user){
-  const shortURL = req.params.shortURL;
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL].longURL = longURL;
-  res.redirect('/urls');
-  return;
+  if (user) {
+    const shortURL = req.params.shortURL;
+    const longURL = req.body.longURL;
+    urlDatabase[shortURL].longURL = longURL;
+    res.redirect('/urls');
+    return;
   } else {
     res.send("You Only Edit or Delete Your Own URLs!");
   }
