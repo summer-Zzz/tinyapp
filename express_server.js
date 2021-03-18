@@ -9,8 +9,8 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", urlUser: "82dfba"},
+  "9sm5xK": {longURL: "http://www.google.com", urlUser: "ca645c"}
 };
 
 const users = {
@@ -39,6 +39,7 @@ const findUserByEmail = (email) => {
   return false;
 };
 
+//check the email and password
 const authenticateUser = (email, password) => {
   const userId = findUserByEmail(email);
   if (userId.password === password) {
@@ -48,68 +49,109 @@ const authenticateUser = (email, password) => {
   }
 };
 
+//display hello in the home page
 app.get("/", (req, res) => {
-  res.send("Hello!"); //display hello in the home page
+  res.send("Hello!"); 
 });
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
 // });
 
+// to loop through the database
 app.get("/urls", (req, res) => {
   const templateVars =
   { urls: urlDatabase,
     user: req.cookies["user_id"]
   };
+  // if (templateVars.user) {
   res.render("urls_index", templateVars);
-  // to loop through the database
 });
 
+//create new shorturl and redirect to /urls/:shortURL
 app.post("/urls", (req, res) => {
+  const user = req.cookies["user_id"];
+  if (user){
   const newShortUrl = generateRandomString();
-  urlDatabase[newShortUrl] = req.body.longURL;
+  urlDatabase[newShortUrl] = {
+   longURL: req.body.longURL,
+   urlUser: user.id,
+  }
+  // const templateVars =
+  // { 
+  //   user: req.cookies["user_id"]
+  // };
   res.redirect(`/urls/${newShortUrl}`);
+  } else {
+    res.redirect("/login");
+  }
 });
 
 //delete the shortened url
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const user = req.cookies["user_id"];
+  if (user){
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   //redirect
   res.redirect('/urls');
+  } else {
+    res.send("You Only Edit or Delete Your Own URLs!");
+  }
 });
 
 //create new url
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: req.cookies["user_id"]
-  };
-  res.render("urls_new", templateVars);
+  }
+  if (templateVars.user) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login")
+  }
 });
+
+// app.post("/urls/new", (req, res) => {
+//   const userFound = findUserByEmail(email);
+//   if (req.cookies["user_id"]){
+//   } else {
+//     res.redirect("/login")
+//   }
+// })
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
+  const user = req.cookies["user_id"];
+  const urlUser = urlDatabase[shortURL].urlUser;
+  const longURL = urlDatabase[shortURL].longURL;
   const templateVars =
-  { shortURL: shortURL,
-    longURL: urlDatabase[shortURL],
-    user: req.cookies["user_id"] };
+  { shortURL,
+    longURL,
+    urlUser,
+    user };
   res.render("urls_show", templateVars);
 });
 
 //redirect to the longURL page by using a shortURL
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
 //update a url
 app.post("/urls/:shortURL", (req, res) => {
+  const user = req.cookies["user_id"];
+  if (user){
   const shortURL = req.params.shortURL;
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL].longURL = longURL;
   res.redirect('/urls');
   return;
+  } else {
+    res.send("You Only Edit or Delete Your Own URLs!");
+  }
 });
 
 app.get("/login", (req, res) => {
@@ -127,7 +169,7 @@ app.post("/login", (req, res) => {
   if (email && password) {
     if (userFound) {
       if (authenticateUser(email, password)) {
-        res.cookie('user_id', findUserByEmail(email));
+        res.cookie('user_id', userFound);
         res.redirect("/urls");
       } else {
         res.status(403).send('Wrong Password!');
@@ -158,7 +200,6 @@ app.post("/register", (req, res) => {
   const newUserId = generateRandomString();
   const newEmail = req.body.newemail;
   const newPassword = req.body.newpassword;
-  console.log(users);
   const userFound = findUserByEmail(newEmail);
   if (newEmail && newPassword) { //check if they put email and password
     if (!userFound) { // check if user exists
