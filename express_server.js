@@ -1,14 +1,21 @@
 const express = require("express");
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const saltRound = 10;
 const app = express();
 const PORT = 8080;
 
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}))
+
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+// const cookieParser = require('cookie-parser');
+// app.use(cookieParser());
 app.set("view engine", "ejs");
+
 
 const urlDatabase = {
   "b2xVn2": {longURL: "http://www.lighthouselabs.ca", urlUser: "82dfba"},
@@ -28,7 +35,6 @@ const users = {
   }
 };
 
-console.log(users)
 const generateRandomString = () => {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 };
@@ -65,7 +71,7 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars =
   { urls: urlDatabase,
-    user: req.cookies["user_id"]
+    user: req.session["user_id"]
   };
   // if (templateVars.user) {
   res.render("urls_index", templateVars);
@@ -73,7 +79,7 @@ app.get("/urls", (req, res) => {
 
 //create new shorturl and redirect to /urls/:shortURL
 app.post("/urls", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session["user_id"];
   if (user) {
     const newShortUrl = generateRandomString();
     urlDatabase[newShortUrl] = {
@@ -92,7 +98,7 @@ app.post("/urls", (req, res) => {
 
 //delete the shortened url
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session["user_id"];
   if (user) {
     const shortURL = req.params.shortURL;
     delete urlDatabase[shortURL];
@@ -106,7 +112,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 //create new url
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: req.cookies["user_id"]
+    user: req.session["user_id"]
   };
   if (templateVars.user) {
     res.render("urls_new", templateVars);
@@ -125,7 +131,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const user = req.cookies["user_id"];
+  const user = req.session["user_id"];
   const urlUser = urlDatabase[shortURL].urlUser;
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars =
@@ -145,7 +151,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 //update a url
 app.post("/urls/:shortURL", (req, res) => {
-  const user = req.cookies["user_id"];
+  const user = req.session["user_id"];
   if (user) {
     const shortURL = req.params.shortURL;
     const longURL = req.body.longURL;
@@ -159,7 +165,7 @@ app.post("/urls/:shortURL", (req, res) => {
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: req.cookies["user_id"]
+    user: req.session["user_id"]
   };
   res.render("urls_login", templateVars);
 });
@@ -167,12 +173,13 @@ app.get("/login", (req, res) => {
 //login
 app.post("/login", (req, res) => {
   const email = req.body.email;
+  console.log(email)
   const password = req.body.password;
   const userFound = findUserByEmail(email);
   if (email && password) {
     if (userFound) {
       if (authenticateUser(email, password)) {
-        res.cookie('user_id', userFound);
+        req.session["user_id"] = userFound;
         res.redirect("/urls");
       } else {
         res.status(403).send('Wrong Password!');
@@ -186,14 +193,14 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session["user_id"] = null;
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
   //render the regitser template
   const templateVars = {
-    user: req.cookies["user_id"]
+    user: req.session["user_id"]
   };
   res.render("urls_register", templateVars);
 });
@@ -213,7 +220,7 @@ app.post("/register", (req, res) => {
         email: newEmail,
         password: hashedPassword
       };
-      res.cookie('user_id', users[newUserId]);
+      req.session["user_id"] = users[newUserId];
       res.redirect('/urls');
     } else {
       res.status(400).send('The user already exists!');
