@@ -1,4 +1,6 @@
 const express = require("express");
+const bcrypt = require('bcrypt');
+const saltRound = 10;
 const app = express();
 const PORT = 8080;
 
@@ -17,15 +19,16 @@ const users = {
   "82dfba": {
     id: "82dfba",
     email: "mary0283@gmail.com",
-    password: "ilikeapples"
+    password: bcrypt.hashSync("ilikeapples", saltRound)
   },
   "ca645c": {
     id: "ca645c",
     email: "sleepysmith@gmail.com",
-    password: "0283930ddaa"
+    password: bcrypt.hashSync("0283930ddaa", saltRound)
   }
 };
 
+console.log(users)
 const generateRandomString = () => {
   return Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
 };
@@ -42,7 +45,7 @@ const findUserByEmail = (email) => {
 //check the email and password
 const authenticateUser = (email, password) => {
   const userId = findUserByEmail(email);
-  if (userId.password === password) {
+  if (bcrypt.compareSync(password, userId.password)) {
     return true;
   } else {
     return false;
@@ -200,6 +203,7 @@ app.post("/register", (req, res) => {
   const newUserId = generateRandomString();
   const newEmail = req.body.newemail;
   const newPassword = req.body.newpassword;
+  const hashedPassword = bcrypt.hashSync(newPassword, saltRound);
   const userFound = findUserByEmail(newEmail);
   if (newEmail && newPassword) { //check if they put email and password
     if (!userFound) { // check if user exists
@@ -207,7 +211,7 @@ app.post("/register", (req, res) => {
       {
         id: newUserId,
         email: newEmail,
-        password: newPassword
+        password: hashedPassword
       };
       res.cookie('user_id', users[newUserId]);
       res.redirect('/urls');
@@ -222,16 +226,6 @@ app.post("/register", (req, res) => {
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-
-// app.get("/set", (req, res) => {
-//   const a = 1;
-//   res.send(`a = ${a}`);
-//  });
- 
-//  app.get("/fetch", (req, res) => {
-//   res.send(`a = ${a}`);
-//  });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
