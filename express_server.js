@@ -10,7 +10,7 @@ const findUserByEmail = require('./helpers');
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
-}))
+}));
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
@@ -111,20 +111,20 @@ app.get("/urls/:shortURL", (req, res) => {
   if (user) {
     if (urlDatabase[shortURL]) {
       if (urlDatabase[shortURL].urlUser === user.id) {
-    const longURL = urlDatabase[shortURL].longURL;
-    const templateVars =
+        const longURL = urlDatabase[shortURL].longURL;
+        const templateVars =
     { shortURL,
       longURL,
       user };
-    res.render("urls_show", templateVars);
+        res.render("urls_show", templateVars);
       } else {
         res.send("You don't own this URL!");
       }
     } else {
-        res.send("Given ID does not exist!");
+      res.send("Given ID does not exist!");
     }
   } else {
-    res.send ('Please Login')
+    res.send('Please Login');
   }
 });
 
@@ -132,10 +132,10 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (urlDatabase[shortURL]) {
-  const longURL = urlDatabase[shortURL].longURL;
-  res.redirect(longURL);
+    const longURL = urlDatabase[shortURL].longURL;
+    res.redirect(longURL);
   } else {
-    res.send ('Given ID does not exist!')
+    res.send('Given ID does not exist!');
   }
 });
 
@@ -190,7 +190,7 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
- //render the regitser template
+//render the regitser template
 app.get("/register", (req, res) => {
   const templateVars = {
     user: req.session["user_id"]
